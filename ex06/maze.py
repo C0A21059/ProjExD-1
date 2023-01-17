@@ -13,7 +13,7 @@ WIDTH = 1500 #ウィンドウの横幅 <矢島>
 HEIGHT = 900 #ウィンドウの縦幅 <矢島>
 MAZE_X, MAZE_Y = 15, 15 #迷宮のマスの数 <矢島>
 WINDOW_BLOCK = 60 #1マスの大きさ <矢島>
-NUM_ENEMY = 10 #敵の数 <矢島>
+NUM_ENEMY = 15 #敵の数 <矢島>
 MAIN_FLOOR_LEN = 3 # フロアの数（階層数） <児玉>
 HOOL_NUM = 30 # 穴の数 <児玉>
 COMMAND = ["[A]ttack", "[I]tems", "[M]agic", "[R]un"] #Playerのコマンドのリスト <貞野>
@@ -27,7 +27,10 @@ mount = "main" #メインエリアかサブエリアかを判別する変数 <�
 
 
 
-PlayerImg = pg.image.load("fig/0.png") #プレイヤー画像の指定 <山本>
+PlayerImg = [pg.image.load("fig/mukimuki_down.png"), #プレイヤー画像の指定 <山本>画像の作成<児玉>
+             pg.image.load("fig/mukimuki_left.png"),
+             pg.image.load("fig/mukimuki_right.png"),
+             pg.image.load("fig/mukimuki_up.png")]
 EnemyImg = [pg.image.load("fig/1.png"), #ダンジョン内敵画像の指定 <山本>
             pg.image.load("fig/2.png"),
             pg.image.load("fig/3.png"),
@@ -145,7 +148,7 @@ class Hole(Goal): #落とし穴
         screen_obj.sfc.blit(self.sfc, self.rct) # 穴の描画 <児玉>
     
     def chenge_color(self): #色の変更 <矢島>
-        pg.draw.rect(self.sfc, self.color, (0 ,0, self.block,self.block)) #Surfaceオブジェクトを新しい色の正方形で塗りつぶす <矢島>
+        pg.draw.rect(self.sfc, self.af_color, (0 ,0, self.block,self.block)) #Surfaceオブジェクトを新しい色の正方形で塗りつぶす <矢島>
 
 
 class BGM: #BGMに関してのクラス<越後谷>
@@ -171,22 +174,23 @@ class BGM: #BGMに関してのクラス<越後谷>
 
 class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
 
-    key_delta = {pg.K_UP:[0, -1],
-                 pg.K_DOWN:[0, 1],
-                 pg.K_LEFT:[-1, 0],
-                 pg.K_RIGHT:[1, 0]} #押下キーに対する座標遷移のdict <矢島>
+    key_delta = {pg.K_UP:[0, -1, 3],
+                 pg.K_DOWN:[0, 1, 0],
+                 pg.K_LEFT:[-1, 0, 1],
+                 pg.K_RIGHT:[1, 0, 2]} #押下キーに対する座標遷移のdict <矢島>画像の指定<山本>
     x, y = 4, 4 #迷宮の左上にプレイヤーを配置 <矢島> <改定 山本>
 
     def __init__(self,block,screen_obj,Img):
         self.block = block #1マスの大きさ <矢島>
-        self.sfc = Img #画像を描画したsurfaceクラスを受け取る <山本>
+        self.img = Img
+        self.sfc = self.img[0] #画像を描画したsurfaceクラスを受け取る <山本>
         self.sfc = pg.transform.scale(self.sfc, (block, block)) #画像の大きさを整える <山本>
         self.rct = self.sfc.get_rect() #rectオブジェクトの取得 <矢島>
         self.rct.center = block/2+block*(screen_obj.rct.right/block//2), block/2+block*(screen_obj.rct.bottom/block//2) #画面の真ん中にプレイヤーを設置 <矢島>
         
-        self.hp = 3 #プレイヤーの体力 <山本>
+        self.hp = 300 #プレイヤーの体力 <山本>
         self.max_hp = 300 #プレイヤーの最大体力 <山本>
-        self.sp = 2 #プレイヤーのスタミナ <山本>
+        self.sp = 300 #プレイヤーのスタミナ <山本>
         self.step = load_sound("asioto.wav")  
 
     def blit(self, screen_obj):
@@ -213,6 +217,11 @@ class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
             if pressed[delta]:
                 x += __class__.key_delta[delta][0]
                 y += __class__.key_delta[delta][1]#押下キーに対応して座標を変更 <矢島>
+                self.sfc = self.img[__class__.key_delta[delta][2]] #画像の変更 <山本>
+                self.sfc = pg.transform.scale(self.sfc, (block, block)) #画像の大きさを整える <山本>
+                self.rct = self.sfc.get_rect() #rectオブジェクトの取得 <矢島>
+                self.rct.center = block/2+block*(screen_obj.rct.right/block//2), block/2+block*(screen_obj.rct.bottom/block//2) #画面の真ん中にプレイヤーを設置 <矢島>
+            
                 if pg.mixer:
                     self.step.play() #足音再生<越後谷>   
 
@@ -263,7 +272,7 @@ class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
                 time.sleep(1) #確認用の待機時間 <矢島>
                 return True #bool値を返す <矢島>
     
-    def update_state(self):
+    def update_state(self): #ステータスを更新する <山本>
         if self.sp > 0:
             self.sp -= 1
             if self.hp < self.max_hp:
