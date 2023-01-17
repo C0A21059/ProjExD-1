@@ -21,9 +21,22 @@ main_dir = os.path.split(os.path.abspath(__file__))[0]
 main_dir=main_dir.replace("\\ex06","")
 
 #変数の設定
-mode = 8 #迷路画面の描画と戦闘画面の描画を切り替える変数 <貞野> <訂正 山本>
+mode = 7 #迷路画面の描画と戦闘画面の描画を切り替える変数 <貞野> <訂正 山本>
 floor = 0 #現在の階層を保持する変数 <山本>
 mount = "main" #メインエリアかサブエリアかを判別する変数 <山本>
+
+
+
+PlayerImg = pg.image.load("fig/0.png") #プレイヤー画像の指定 <山本>
+EnemyImg = [pg.image.load("fig/1.png"), #ダンジョン内敵画像の指定 <山本>
+            pg.image.load("fig/2.png"),
+            pg.image.load("fig/3.png"),
+            pg.image.load("fig/4.png"),
+            pg.image.load("fig/5.png"),
+            pg.image.load("fig/6.png"),
+            pg.image.load("fig/7.png"),
+            pg.image.load("fig/8.png"),
+            pg.image.load("fig/9.png")]
 
 
 class Screen: # スクリーン <矢島>
@@ -49,7 +62,6 @@ class Maze:#迷宮 <矢島> <改訂 児玉>
             for _ in range(HOOL_NUM): # 規定数Holeオブジェクトを設置 <児玉>
                 Hole(block, self)
                 
-
 
     def show_maze(self, player_obj, block, screen_obj, enemy_lst): #迷宮の表示 <矢島>
         screen_obj.sfc.fill((0,0,0)) #ウィンドウを黒で塗りつぶし <矢島>
@@ -157,7 +169,7 @@ class BGM: #BGMに関してのクラス<越後谷>
         pg.mixer.stop()
         
 
-class Player: #プレイヤー <矢島> <改訂 児玉>
+class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
 
     key_delta = {pg.K_UP:[0, -1],
                  pg.K_DOWN:[0, 1],
@@ -165,19 +177,17 @@ class Player: #プレイヤー <矢島> <改訂 児玉>
                  pg.K_RIGHT:[1, 0]} #押下キーに対する座標遷移のdict <矢島>
     x, y = 4, 4 #迷宮の左上にプレイヤーを配置 <矢島> <改定 山本>
 
-    def __init__(self,block,screen_obj):
-        # self.x, self.y = 4, 4 #迷宮の左上にプレイヤーを配置 <矢島> <山本>
+    def __init__(self,block,screen_obj,Img):
         self.block = block #1マスの大きさ <矢島>
-        self.sfc = pg.Surface((block, block)) # 1マス分の大きさのSurfaceオブジェクトを作成 <矢島>
-        pg.draw.circle(self.sfc, (0, 0, 255), (block/2, block/2), block/2) #Surfaceオブジェクトに青色の丸を表示 <矢島>
-        self.sfc.set_colorkey((0, 0, 0)) #丸の背景を黒色に設定 <矢島>
+        self.sfc = Img #画像を描画したsurfaceクラスを受け取る <山本>
+        self.sfc = pg.transform.scale(self.sfc, (block, block)) #画像の大きさを整える <山本>
         self.rct = self.sfc.get_rect() #rectオブジェクトの取得 <矢島>
         self.rct.center = block/2+block*(screen_obj.rct.right/block//2), block/2+block*(screen_obj.rct.bottom/block//2) #画面の真ん中にプレイヤーを設置 <矢島>
-
-        self.hp = 300 #プレイヤーの体力 <山本>
-        self.sp = 1000 #プレイヤーのスタミナ <山本>
-        self.step = load_sound("asioto.wav")
-         
+        
+        self.hp = 3 #プレイヤーの体力 <山本>
+        self.max_hp = 300 #プレイヤーの最大体力 <山本>
+        self.sp = 2 #プレイヤーのスタミナ <山本>
+        self.step = load_sound("asioto.wav")  
 
     def blit(self, screen_obj):
         screen_obj.sfc.blit(self.sfc, self.rct) #プレイヤーの描画 <矢島>
@@ -214,7 +224,7 @@ class Player: #プレイヤー <矢島> <改訂 児玉>
             BGM_hole.BGM_stop()
             __class__.hold_x, __class__.hold_y = x, y #座標を保持しておく <児玉>
             __class__.x, __class__.y = x, y #座標の更新を確定 <児玉>
-            self.sp -= 1
+            self.update_state()
             maze_obj.maze_map[x][y].chenge_color()
             maze_obj.show_maze(self, block, screen_obj, enemy_lst) #迷宮の描画(プレイヤーではなく迷宮を動かすことによって移動させるため)  <児玉>
             self.blit(screen_obj) #プレイヤーを描画  <児玉>
@@ -229,7 +239,7 @@ class Player: #プレイヤー <矢島> <改訂 児玉>
             BGM_kaidan.saisei()
             BGM_kaidan.BGM_stop()
             __class__.x, __class__.y = x, y #座標の更新を確定 <矢島>
-            self.sp -= 1
+            self.update_state()
             maze_obj.show_maze(self, block, screen_obj, enemy_lst) #迷宮の描画(プレイヤーではなく迷宮を動かすことによって移動させるため) <矢島>
             self.blit(screen_obj) #プレイヤーを描画 <矢島>
             pg.display.update() #画面の更新 <矢島>
@@ -238,7 +248,7 @@ class Player: #プレイヤー <矢島> <改訂 児玉>
 
         elif isinstance(maze_obj.maze_map[x][y], Road): #移動先が道だったら <矢島>
             __class__.x, __class__.y = x, y #座標の更新を確定 <矢島>
-            self.sp -= 1
+            self.update_state()
             for enemy in enemy_lst:
                 enemy.update_xy(maze_obj) #全ての敵を移動させる <矢島>
 
@@ -253,14 +263,24 @@ class Player: #プレイヤー <矢島> <改訂 児玉>
                 time.sleep(1) #確認用の待機時間 <矢島>
                 return True #bool値を返す <矢島>
     
+    def update_state(self):
+        if self.sp > 0:
+            self.sp -= 1
+            if self.hp < self.max_hp:
+                self.hp += 1
+        else:
+            self.hp -= 1
+
 
 class Enemy: #敵オブジェクト <矢島>
 
-    def __init__(self,block,maze_obj,player_obj):
+    def __init__(self,block,maze_obj,player_obj, Img):
         self.sfc = pg.Surface((block, block)) #1マス分のSurfaceオブジェクトを作成 <矢島>
         pg.draw.circle(self.sfc, (255, 0, 0), (block/2, block/2), block/2) #Surfaceオブジェクト内に赤色の円を描画 <矢島>
-        self.sfc.set_colorkey((0, 0, 0)) #円の背景を黒に設定 <矢島>
-        self.rct = self.sfc.get_rect() #rectオブジェクトの取得 <矢島>
+        self.sfc = Img #画像を描画したsurfaceクラスを受け取る <山本>
+        self.sfc = pg.transform.scale(self.sfc, (block, block)) #画像の大きさを整える <山本>
+        self.rct = self.sfc.get_rect() #rectオブジェクトの取得 <山本>
+
         while True: #ループ処理(初期座標の設定) <矢島>
             self.x = random.randint(0,len(maze_obj.maze_map)-1) #x座標ランダムに設定 <矢島>
             self.y = random.randint(0,len(maze_obj.maze_map[0])-1) #y座標をランダムに設定 <矢島>
@@ -453,10 +473,8 @@ def play_game(maze, screen, player): #<児玉> <改訂 矢島> <追加　貞野>
 
     # player = Player(WINDOW_BLOCK,screen) #プレイヤーの作成 <矢島>
     Player.x, Player.y = 4, 4 #プレイヤーの初期座標
-    enemies = [Enemy(WINDOW_BLOCK,mount_maze,player) for _ in range(NUM_ENEMY)] #敵を格納したlistオブジェクトの作成 <矢島>
-    # mount_maze.show_maze(player, WINDOW_BLOCK, screen, enemies) #迷宮・敵の描画 <矢島>
-    # player.blit(screen) #プレイヤーの描画 <矢島>
- 
+    enemies = [Enemy(WINDOW_BLOCK,mount_maze,player,random.choice(EnemyImg)) for _ in range(NUM_ENEMY)] #敵を格納したlistオブジェクトの作成 <矢島>
+
     #ループ処理 <矢島>
     m = 0####################
     BGM_title1 = BGM('BGM/BGM.mp3',2.7)
@@ -467,7 +485,7 @@ def play_game(maze, screen, player): #<児玉> <改訂 矢島> <追加　貞野>
     
     while True:
         pg.display.update() #画面の更新 <矢島>
-        if mode == 8: #タイトル画面 <山本>
+        if mode == 7: #タイトル画面 <山本>
             for event in pg.event.get(): #イベントの取得 <山本>
                 if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら <山本>
                     pg.quit() #pygemeの終了 <山本>
@@ -502,18 +520,27 @@ def play_game(maze, screen, player): #<児玉> <改訂 矢島> <追加　貞野>
                     collision.play()
                 battle = Battle() #敵と衝突した際にバトル画面のクラスを作成 <貞野>
                 mode = 1 #戦闘画面を描画させるためモードを変更 <貞野>
+            if player.hp < 0: #プレイヤーの体力が0の時
+                font = pg.font.Font(None, 120) #ゲームオーバーの描画 <山本>
+                txt = font.render(f"GAME OVER", True, "#ffffff")
+                screen.sfc.blit(txt, (WIDTH/2, HEIGHT/2))
+                pg.display.update()
+                time.sleep(3)
+                mode = 8
         if mode == 1: #戦闘画面 <貞野>
             for event in pg.event.get(): #イベントの取得 <貞野>
                 if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら <貞野>
                     pg.quit() #pygemeの終了 <貞野>
                     sys.exit() #プログラムの終了 <貞野>
             mode = battle.battle(screen) #Battleクラスのbattleメソッドで戦闘が続く場合は1を、戦闘が終了する場合は0を返す <貞野>
+        if mode == 8:
+            break #while文を抜ける <山本>
 
 
 def main(): #メイン関数 <矢島> <改訂 児玉> <改訂 山本>
-    global floor
+    global floor, mode
     screen = Screen("test", (WIDTH, HEIGHT)) #スクリーンの作成 <矢島>
-    player = Player(WINDOW_BLOCK,screen) #プレイヤーの作成 <矢島> <改訂 山本>
+    player = Player(WINDOW_BLOCK,screen,PlayerImg) #プレイヤーの作成 <矢島> <改訂 山本>
 
     # 迷宮の作成
     # メインフロア変数の数分を格納したリストを作成 <児玉>
@@ -523,8 +550,13 @@ def main(): #メイン関数 <矢島> <改訂 児玉> <改訂 山本>
 
     # フロア（階層）を回す <児玉>
     for maze in maze_lst:
-        floor += 1 #現在の階層をカウント <山本>
-        play_game(maze, screen, player) # play_gameを呼び出し、プレイを開始する <児玉>
+        if mode != 8: #ゲームオーバーではない時 <山本>
+            floor += 1 #現在の階層をカウント <山本>
+            play_game(maze, screen, player) # play_gameを呼び出し、プレイを開始する <児玉>
+        else: #ゲームオーバー時 <山本>
+            floor = 0 #階層のリセット <山本>
+            mode = 7 #描画画面をタイトルに設定 <山本>
+            main() #再びゲーム開始 <山本>
     clear_font = pg.font.Font(None, 100)#ゲームクリア時のフォントの設定<越後谷>
     clear_text = clear_font.render("GameClear", True, (255,0,0))#赤色文字に設定<越後谷>
     screen.sfc.blit(clear_text, (550,150))#550,150の位置に設定<越後谷>
