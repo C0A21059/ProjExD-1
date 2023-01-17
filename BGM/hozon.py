@@ -6,7 +6,7 @@ import pygame as pg
 import os
 
 #ローカルモジュールのimport
-from maze_maker import create_dungeon
+from ex06.maze_maker import create_dungeon
 
 #定数の設定
 WIDTH = 1500 #ウィンドウの横幅 <矢島>

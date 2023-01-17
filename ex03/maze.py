@@ -1,5 +1,5 @@
 import tkinter as tk
-from maze_maker import make_maze
+from ex06.maze_maker import make_maze
 
 
 def key_down(event): #キー押下時の操作
