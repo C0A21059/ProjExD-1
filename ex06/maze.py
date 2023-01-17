@@ -12,12 +12,13 @@ from maze_maker import create_dungeon
 WIDTH = 1500 #ウィンドウの横幅 <矢島>
 HEIGHT = 900 #ウィンドウの縦幅 <矢島>
 MAZE_X, MAZE_Y = 15, 15 #迷宮のマスの数 <矢島>
-WINDOW_BLOCK = 10 #1マスの大きさ <矢島>
+WINDOW_BLOCK = 60 #1マスの大きさ <矢島>
 NUM_ENEMY = 10 #敵の数 <矢島>
 MAIN_FLOOR_LEN = 3 # フロアの数（階層数） <児玉>
 HOOL_NUM = 30 # 穴の数 <児玉>
 COMMAND = ["[A]ttack", "[I]tems", "[M]agic", "[R]un"] #Playerのコマンドのリスト <貞野>
 main_dir = os.path.split(os.path.abspath(__file__))[0]
+main_dir=main_dir.replace("\\ex06","")
 
 #変数の設定
 mode = 8 #迷路画面の描画と戦闘画面の描画を切り替える変数 <貞野> <訂正 山本>
