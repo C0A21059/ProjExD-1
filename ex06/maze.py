@@ -151,7 +151,7 @@ class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
                  pg.K_LEFT:[-1, 0],
                  pg.K_RIGHT:[1, 0]} #押下キーに対する座標遷移のdict <矢島>
     x, y = 4, 4 #迷宮の左上にプレイヤーを配置 <矢島> <改定 山本>
-
+        
     def __init__(self,block,screen_obj,Img):
         self.block = block #1マスの大きさ <矢島>
         self.sfc = Img #画像を描画したsurfaceクラスを受け取る <山本>
@@ -179,12 +179,16 @@ class Player: #プレイヤー <矢島> <改訂 児玉> <改訂 山本>
         font = pg.font.Font(None, 60) #スタミナの描画 <山本>
         txt = font.render(f"SP:{self.sp}", True, "#ffffff")
         screen_obj.sfc.blit(txt, (50, 200))
+>>>>>>> 39a62cdc78cef8e76b56d051595cc30bd9c6632c
     
     def update_xy(self, maze_obj, screen_obj, enemy_lst,block): #プレイヤーの座標を更新 <矢島>
         pressed = pg.key.get_pressed() #押下キーを取得 <矢島>
         x, y = __class__.x, __class__.y #現在の座標を取得 <矢島> <改訂 山本>
         for delta in __class__.key_delta:
             if pressed[delta]:
+              
+                
+                
                 x += __class__.key_delta[delta][0]
                 y += __class__.key_delta[delta][1]#押下キーに対応して座標を変更 <矢島>
         
@@ -418,82 +422,67 @@ def play_game(maze, screen, player): #<児玉> <改訂 矢島> <追加　貞野>
     Player.x, Player.y = 4, 4 #プレイヤーの初期座標
     enemies = [Enemy(WINDOW_BLOCK,mount_maze,player,random.choice(EnemyImg)) for _ in range(NUM_ENEMY)] #敵を格納したlistオブジェクトの作成 <矢島>
     
-    #ループ処理 <矢島>
+    def blit(self, screen_obj):
+        screen_obj.sfc.blit(self.sfc, self.rct) #ゴールの描画
+
+
+def main(): #メイン関数
+
+    #定数の設定
+    WIDTH = 1600 #ウィンドウの横幅
+    HEIGHT = 900 #ウィンドウの縦幅
+    MAZE_X, MAZE_Y = 500, 500 #迷宮のマスの数
+    WINDOW_BLOCK = 20 #1マスの大きさ
+    NUM_ENEMY = 200 #敵の数
+
+    #オブジェクトの作成
+    screen = Screen("test", (WIDTH, HEIGHT)) #スクリーンの作成
+    maze = Maze(MAZE_X, MAZE_Y, WINDOW_BLOCK) #迷宮の作成
+    player = Player(WINDOW_BLOCK,screen) #プレイヤーの作成
+    enemies = [Enemy(WINDOW_BLOCK,maze,player) for _ in range(NUM_ENEMY)] #敵を格納したlistオブジェクトの作成
+    maze.show_maze(player, WINDOW_BLOCK, screen, enemies) #迷宮・敵の描画
+    player.blit(screen) #プレイヤーの描画
+    
+    #BGM_haikei = BGM('BGM/haikei.wav', 0.01)
+    BGM_sentou = BGM('BGM/asioto.wav', 0.01)
+    
+
+    
+    i = 0
+    
+
+    #ループ処理
     while True:
-        pg.display.update() #画面の更新 <矢島>
-        if mode == 7: #タイトル画面 <山本>
-            for event in pg.event.get(): #イベントの取得 <山本>
-                if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら <山本>
-                    pg.quit() #pygemeの終了 <山本>
-                    sys.exit() #プログラムの終了 <山本>
-                if event.type == pg.KEYDOWN:
-                    if event.key == pg.K_SPACE: #スペースキーが押された場合
-                        mode = 0 #ゲームを開始する <山本>
-                screen.sfc.blit(title_sfc, title_rct)
+        pg.display.update() #画面の更新
+        maze.show_maze(player,WINDOW_BLOCK,screen,enemies) #迷宮・敵の描画
+        player.blit(screen) #プレイヤーの描画
 
-        if mode == 0: #迷路画面 <貞野>
-            mount_maze.show_maze(player,WINDOW_BLOCK,screen,enemies) #迷宮・敵の描画 <矢島>
-            player.blit(screen) #プレイヤーの描画 <矢島>
-            for event in pg.event.get(): #イベントの取得 <矢島>
-                if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら <矢島>
-                    pg.quit() #pygemeの終了 <児玉>
-                    sys.exit() #プログラムの終了 <児玉>
-                if event.type == pg.KEYDOWN: #キーが押されたら <矢島>
-                    pos = player.update_xy(mount_maze, screen, enemies, WINDOW_BLOCK) #プレイヤー・敵の座標の更新<矢島>
-                    if pos == "goal":
-                        if mount == "sub":
-                            Player.x, Player.y = Player.hold_x, Player.hold_y
-                            mount = "main" #エリアをメインに変更 <山本>
-                        return # ゴールしていれば → メインフロアならmain()に戻る、地下フロアなら一つ上のplay_game()に戻る <児玉>
-                    if isinstance(pos, Maze): # 穴を踏んでいれば <児玉>
-                        maze=pos #生成した迷宮を受け取る<矢島>
-                        mount = "sub" #エリアをサブに変更<山本>
-                        play_game(maze, screen, player) # 生成した地下のマップを引数に与えながら、play_gameを再帰呼び出しする <児玉> <改訂 矢島> <改訂 山本>
-            if player.colliderect(enemies,screen): #敵とプレイヤーが衝突していれば <矢島>
-                battle = Battle() #敵と衝突した際にバトル画面のクラスを作成 <貞野>
-                mode = 1 #戦闘画面を描画させるためモードを変更 <貞野>
-            if player.hp < 0: #プレイヤーの体力が0の時
-                font = pg.font.Font(None, 120) #ゲームオーバーの描画 <山本>
-                txt = font.render(f"GAME OVER", True, "#ffffff")
-                screen.sfc.blit(txt, (WIDTH/2, HEIGHT/2))
-                pg.display.update()
-                time.sleep(3)
-                mode = 8
-        if mode == 8:
-            break #while文を抜ける <山本>
-
-        if mode == 1: #戦闘画面 <貞野>
-            for event in pg.event.get(): #イベントの取得 <貞野>
-                if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら <貞野>
-                    pg.quit() #pygemeの終了 <貞野>
-                    sys.exit() #プログラムの終了 <貞野>
-            mode = battle.battle(screen) #Battleクラスのbattleメソッドで戦闘が続く場合は1を、戦闘が終了する場合は0を返す <貞野>
+        
+        for event in pg.event.get(): #イベントの取得
+            i += 1
+            print(f"{i}=num")
+            #BGM_haikei.mugensaisei()#背景BGM
 
 
-def main(): #メイン関数 <矢島> <改訂 児玉> <改訂 山本>
-    global floor, mode
-    screen = Screen("test", (WIDTH, HEIGHT)) #スクリーンの作成 <矢島>
-    player = Player(WINDOW_BLOCK,screen,PlayerImg) #プレイヤーの作成 <矢島> <改訂 山本>
+            if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら
+                return #main関数の脱出(ゲームの終了)
+            if event.type == pg.KEYDOWN: #キーが押されたら
+                player.update_xy(maze, screen, enemies, WINDOW_BLOCK) #プレイヤー・敵の座標の更新
+    
+        if player.colliderect(enemies,screen): #敵とプレイヤーが衝突していれば
+            BGM_sentou.saisei()
+            #BGM_haikei.BGM_stop()
+            BGM_sentou.BGM_stop()
+            exit() #main関数の脱出(ゲームの終了)
 
-    # 迷宮の作成
-    # メインフロア変数の数分を格納したリストを作成 <児玉>
-    '''下図イメージ
-    [1階層-メイン, 2階層-メイン, 3階層-メイン, ... , n階層-メイン]    '''    
-    maze_lst = [Maze(MAZE_X,MAZE_Y,WINDOW_BLOCK, 0) for _ in range(MAIN_FLOOR_LEN)]
+    
 
-    # フロア（階層）を回す <児玉>
-    for maze in maze_lst:
-        if mode != 8: #ゲームオーバーではない時 <山本>
-            floor += 1 #現在の階層をカウント <山本>
-            play_game(maze, screen, player) # play_gameを呼び出し、プレイを開始する <児玉>
-        else: #ゲームオーバー時 <山本>
-            floor = 0 #階層のリセット <山本>
-            mode = 7 #描画画面をタイトルに設定 <山本>
-            main() #再びゲーム開始 <山本>
 
+def exit():
+    pg.quit() #pygemeの終了
+    sys.exit() #プログラムの終了
 
 if __name__ == "__main__":
     pg.init() #pygameを初期化
     main() #ゲームの実行
-    pg.quit() #pygemeの終了
-    sys.exit() #プログラムの終了
+    
