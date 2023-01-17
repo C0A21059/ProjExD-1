@@ -7,7 +7,6 @@ import pygame as pg
 #ローカルモジュールのimport
 from maze_maker import make_maze
 
-
 class Screen: # スクリーン
 
     def __init__(self, title, width_height): 
@@ -84,11 +83,15 @@ class Player: #プレイヤー
     def __init__(self,block,screen_obj):
         self.x , self.y = 1, 1 #迷宮の左上にプレイヤーを配置
         self.block = block #1マスの大きさ
+        
+       
+        
         self.sfc = pg.Surface((block, block)) # 1マス分の大きさのSurfaceオブジェクトを作成
         pg.draw.circle(self.sfc, (0, 0, 255), (block/2, block/2), block/2) #Surfaceオブジェクトに青色の丸を表示
         self.sfc.set_colorkey((0, 0, 0)) #丸の背景を黒色に設定
         self.rct = self.sfc.get_rect() #rectオブジェクトの取得
         self.rct.center = block/2+block*(screen_obj.rct.right/block//2), block/2+block*(screen_obj.rct.bottom/block//2) #画面の真ん中にプレイヤーを設置
+        
     
     def blit(self,screen_obj):
         screen_obj.sfc.blit(self.sfc, self.rct) #プレイヤーの描画
@@ -98,6 +101,9 @@ class Player: #プレイヤー
         x, y = self.x, self.y #現在の座標を取得
         for delta in __class__.key_delta:
             if pressed[delta]:
+              
+                
+                
                 x += __class__.key_delta[delta][0]
                 y += __class__.key_delta[delta][1]#押下キーに対応して座標を変更
         if isinstance(maze_obj.maze_map[x][y], Goal):#移動先のマスがゴールだったら
@@ -172,7 +178,7 @@ def main(): #メイン関数
     #定数の設定
     WIDTH = 1600 #ウィンドウの横幅
     HEIGHT = 900 #ウィンドウの縦幅
-    MAZE_X, MAZE_Y = 100, 100 #迷宮のマスの数
+    MAZE_X, MAZE_Y = 500, 500 #迷宮のマスの数
     WINDOW_BLOCK = 20 #1マスの大きさ
     NUM_ENEMY = 200 #敵の数
 
@@ -183,23 +189,52 @@ def main(): #メイン関数
     enemies = [Enemy(WINDOW_BLOCK,maze,player) for _ in range(NUM_ENEMY)] #敵を格納したlistオブジェクトの作成
     maze.show_maze(player, WINDOW_BLOCK, screen, enemies) #迷宮・敵の描画
     player.blit(screen) #プレイヤーの描画
+    
+    #BGM_haikei = BGM('BGM/haikei.wav', 0.01)
+    BGM_sentou = BGM('BGM/asioto.wav', 0.01)
+    
+
+    
+    i = 0
+    
 
     #ループ処理
     while True:
         pg.display.update() #画面の更新
         maze.show_maze(player,WINDOW_BLOCK,screen,enemies) #迷宮・敵の描画
         player.blit(screen) #プレイヤーの描画
+
+        
         for event in pg.event.get(): #イベントの取得
+            i += 1
+            print(f"{i}=num")
+            #BGM_haikei.mugensaisei()#背景BGM
+
+
             if event.type == pg.QUIT: #ウィンドウの×ボタンが押されたら
                 return #main関数の脱出(ゲームの終了)
             if event.type == pg.KEYDOWN: #キーが押されたら
                 player.update_xy(maze, screen, enemies, WINDOW_BLOCK) #プレイヤー・敵の座標の更新
+                
+
         if player.colliderect(enemies,screen): #敵とプレイヤーが衝突していれば
-            return #main関数の脱出(ゲームの終了)
+            BGM_sentou.saisei()
+            #BGM_haikei.BGM_stop()
+            BGM_sentou.BGM_stop()
+            exit() #main関数の脱出(ゲームの終了)
+
+    
 
 
-if __name__ == "__main__":
-    pg.init() #pygameを初期化
-    main() #ゲームの実行
+def exit():
     pg.quit() #pygemeの終了
     sys.exit() #プログラムの終了
+
+if __name__ == "__main__":
+    
+
+    pg.init() #pygameを初期化
+    
+
+    main() #ゲームの実行
+    
